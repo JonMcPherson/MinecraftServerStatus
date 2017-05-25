@@ -1,5 +1,16 @@
-*.class
+# Eclipse
 .classpath
-build.properties
-/bin
-/target
+.project
+.settings/
+
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Mac
+.DS_Store
+
+# Maven
+log/
+target/
