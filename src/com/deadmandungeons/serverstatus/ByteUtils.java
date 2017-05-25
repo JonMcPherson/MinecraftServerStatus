@@ -201,10 +201,6 @@ public class ByteUtils {
 	}
 	
 	
-	/**
-	 * @author thinkofdeath
-	 * See: https://gist.github.com/thinkofdeath/e975ddee04e9c87faf22
-	 */
 	public static int readVarInt(DataInputStream in) throws IOException {
 		int i = 0;
 		int j = 0;
@@ -213,21 +209,16 @@ public class ByteUtils {
 			
 			i |= (k & 0x7F) << j++ * 7;
 			
-			if (j > 5)
+			if (j > 5) {
 				throw new RuntimeException("VarInt too big");
-			
-			if ((k & 0x80) != 128)
+			}
+			if ((k & 0x80) != 128) {
 				break;
+			}
 		}
-		
 		return i;
 	}
 	
-	/**
-	 * @author thinkofdeath
-	 * See: https://gist.github.com/thinkofdeath/e975ddee04e9c87faf22
-	 * @throws IOException
-	 */
 	public static void writeVarInt(DataOutputStream out, int paramInt) throws IOException {
 		while (true) {
 			if ((paramInt & 0xFFFFFF80) == 0) {
