@@ -44,7 +44,7 @@ public class MinecraftServer {
     }
 
     /**
-     * @return the server address
+     * @return the resolved server address
      */
     public Address getAddress() {
         return address;

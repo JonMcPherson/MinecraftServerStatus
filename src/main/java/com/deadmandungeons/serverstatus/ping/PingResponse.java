@@ -26,7 +26,7 @@ public class PingResponse extends MinecraftServer {
     }
 
     /**
-     * @return the latency in milliseconds or -1 if latency was not calculated
+     * @return the latency in milliseconds determined by the ping from this machine to the server and back
      */
     public int getLatency() {
         return latency;
@@ -41,7 +41,7 @@ public class PingResponse extends MinecraftServer {
 
     /**
      * An extension of {@link Players} that includes the current online player count
-     * and a sample (possibly incomplete) list of online players.
+     * and a sample (possibly incomplete) list of online players.<p>
      * <b>Note:</b> This data is not guaranteed to be correct or valid since it is easily modified
      * by server plugins usually for the purpose of changing appearance in the Minecraft server list.
      */

@@ -3,8 +3,6 @@ package com.deadmandungeons.serverstatus;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 
 /**
@@ -111,21 +109,14 @@ public class ByteUtils {
         return arr2;
     }
 
-    public static short bytesToShort(byte[] b) {
-        ByteBuffer buf = ByteBuffer.wrap(b, 0, 2);
-        buf.order(ByteOrder.LITTLE_ENDIAN);
-        return buf.getShort();
-    }
-
-    // Big endian !!
+    /**
+     * @param in the integer to convert
+     * @return a byte array of length 4 in big endian order
+     */
     public static byte[] intToBytes(int in) {
         byte[] b;
         b = new byte[]{(byte) (in >>> 24 & 0xFF), (byte) (in >>> 16 & 0xFF), (byte) (in >>> 8 & 0xFF), (byte) (in & 0xFF)};
         return b;
-    }
-
-    public static int bytesToInt(byte[] in) {
-        return ByteBuffer.wrap(in).getInt(); // note: big-endian by default
     }
 
 
