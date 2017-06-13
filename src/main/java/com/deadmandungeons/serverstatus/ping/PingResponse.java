@@ -15,9 +15,21 @@ public class PingResponse extends MinecraftServer {
 
     private final int latency;
 
-    public PingResponse(Address address, PlayersStatus players, Version version, Description description, String favicon, int latency) {
-        super(address, players, version, description, favicon);
+    public PingResponse(Address address, Description description, PlayersStatus players, int latency) {
+        this(address, description, players, null, null, latency);
+    }
+
+    public PingResponse(Address address, Description description, PlayersStatus players, Version version, int latency) {
+        this(address, description, players, version, null, latency);
+    }
+
+    public PingResponse(Address address, Description description, PlayersStatus players, Version version, String favicon, int latency) {
+        super(address, description, players, version, favicon);
         this.latency = latency;
+    }
+
+    PingResponse(PingResponse other, int latency) {
+        this(other.getAddress(), other.getDescription(), other.getPlayers(), other.getVersion(), other.getFavicon(), latency);
     }
 
     @Override
@@ -35,8 +47,8 @@ public class PingResponse extends MinecraftServer {
 
     @Override
     public String toString() {
-        return "MinecraftServer{address=" + getAddress() + ", players=" + getPlayers() + ", version=" + getVersion() + ", description=" +
-                getDescription() + ", latency=" + getLatency() + ", favicon=" + getFavicon() + "}";
+        return "MinecraftServer{address: " + getAddress() + ", players: " + getPlayers() + ", version: " + getVersion() + ", description: " +
+                getDescription() + ", favicon: " + getPrintableFavicon() + ", latency: " + getLatency() + "}";
     }
 
     /**
@@ -50,17 +62,23 @@ public class PingResponse extends MinecraftServer {
         private final int count;
         private final List<Player> sample;
 
+
+        /**
+         * Equivalent to {@link #PlayersStatus(int, int, List) PlayersStatus(max, count, null)}
+         * @param max the maximum amount of players
+         * @param count the current player count
+         */
+        public PlayersStatus(int max, int count) throws IllegalArgumentException {
+            this(max, count, null);
+        }
+
         /**
          * @param max the maximum amount of players
          * @param count the current player count
          * @param sample a list of online players which may be incomplete
-         * @throws IllegalArgumentException if max or count is less than 0
          */
         public PlayersStatus(int max, int count, List<Player> sample) throws IllegalArgumentException {
             super(max);
-            if (count < 0) {
-                throw new IllegalArgumentException("count cannot be less than 0");
-            }
             this.count = count;
             this.sample = (sample != null ? sample : Collections.<Player>emptyList());
         }

@@ -1,6 +1,7 @@
 package com.deadmandungeons.serverstatus.query;
 
 import com.deadmandungeons.serverstatus.ByteUtils;
+import com.deadmandungeons.serverstatus.InetServerAddress;
 import com.deadmandungeons.serverstatus.MinecraftServer.Address;
 import com.deadmandungeons.serverstatus.MinecraftServer.Description;
 import com.deadmandungeons.serverstatus.MinecraftServer.Version;
@@ -25,8 +26,8 @@ public class MinecraftQuery {
     private static final byte STAT_REQUEST_TYPE = 0;
     private static final int SESSION_ID = 1;
 
-    public static QueryResponse queryServerStatus(Address address, int timeout) throws IOException {
-        InetAddress inetAddress = InetAddress.getByName(address.getHost());
+    public static QueryResponse queryServerStatus(InetServerAddress address, int timeout) throws IOException {
+        InetAddress inetAddress = address.getInetAddress();
 
         byte[] handshakeRequest = createRequest(HANDSHAKE_REQUEST_TYPE, SESSION_ID, new byte[0]);
 
@@ -101,7 +102,7 @@ public class MinecraftQuery {
         byte[][] data = ByteUtils.split(response);
 
         String descriptionText = new String(data[3]);
-        Description description = new Description(descriptionText, null);
+        Description description = new Description(descriptionText);
         // String gameMode = new String(data[5]); // Hardcoded to SMP
         // String gameId = new String(data[7]); // Hardcoded to MINECRAFT
         String versionName = new String(data[9]);
@@ -126,9 +127,7 @@ public class MinecraftQuery {
         }
         QueryResponse.PlayersList players = new QueryResponse.PlayersList(playerMax, playerCount, playerList);
 
-        String favicon = null; // TODO favicon is needed for ServerInfo, but is not returned in query response...
-
-        return new QueryResponse(address, players, version, description, favicon, mapName, serverType, plugins);
+        return new QueryResponse(address, description, players, version, mapName, serverType, plugins);
     }
 
 }

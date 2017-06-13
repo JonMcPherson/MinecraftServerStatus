@@ -15,9 +15,9 @@ public class QueryResponse extends MinecraftServer {
     private final String serverType;
     private final List<String> plugins;
 
-    public QueryResponse(Address address, PlayersList players, Version version, Description description, String favicon, String mapName,
+    public QueryResponse(Address address, Description description, PlayersList players, Version version, String mapName,
             String serverType, List<String> plugins) {
-        super(address, players, version, description, favicon);
+        super(address, description, players, version);
         this.mapName = mapName;
         this.serverType = serverType;
         this.plugins = plugins;
@@ -27,6 +27,14 @@ public class QueryResponse extends MinecraftServer {
     @Override
     public Players getPlayers() {
         return super.getPlayers();
+    }
+
+    /**
+     * @return <code>null</code>
+     */
+    @Override
+    public String getFavicon() {
+        return super.getFavicon();
     }
 
     /**
@@ -53,9 +61,8 @@ public class QueryResponse extends MinecraftServer {
 
     @Override
     public String toString() {
-        return "QueryResponse{address=" + getAddress() + ", players=" + getPlayers() + ", version=" + getVersion() + ", description=" +
-                getDescription() + ", mapName=" + getMapName() + ", serverType=" + getServerType() + ", plugins=" + getPlugins() + ", favicon=" +
-                getFavicon() + "}";
+        return "QueryResponse{address: " + getAddress() + ", players: " + getPlayers() + ", version: " + getVersion() + ", description: " +
+                getDescription() + ", mapName: " + getMapName() + ", serverType: " + getServerType() + ", plugins: " + getPlugins() + "}";
     }
 
     /**
@@ -71,13 +78,9 @@ public class QueryResponse extends MinecraftServer {
          * @param max the maximum amount of players
          * @param count the current player count
          * @param list a list of online player names
-         * @throws IllegalArgumentException if max or count is less than 0
          */
         public PlayersList(int max, int count, List<String> list) throws IllegalArgumentException {
             super(max);
-            if (count < 0) {
-                throw new IllegalArgumentException("count cannot be less than 0");
-            }
             this.count = count;
             this.list = (list != null ? list : Collections.<String>emptyList());
         }

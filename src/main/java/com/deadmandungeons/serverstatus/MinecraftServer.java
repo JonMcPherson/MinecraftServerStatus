@@ -1,5 +1,8 @@
 package com.deadmandungeons.serverstatus;
 
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
@@ -10,36 +13,63 @@ import java.util.Objects;
 public class MinecraftServer {
 
     private final Address address;
+    private final Description description;
     private final Players players;
     private final Version version;
-    private final Description description;
     private final String favicon;
 
-    public MinecraftServer(Address address, Players players, Version version, Description description, String favicon) {
+    /**
+     * @param address the resolved server address
+     * @param description the server description
+     * @param players the server players information
+     * @throws IllegalArgumentException if address, description, or players is <code>null</code>
+     */
+    public MinecraftServer(Address address, Description description, Players players) throws IllegalArgumentException {
+        this(address, description, players, null, null);
+    }
+
+    /**
+     * @param address the resolved server address
+     * @param description the server description
+     * @param players the server players information
+     * @param version the server version information, or <code>null</code> if the server version is unknown
+     * @throws IllegalArgumentException if address, description, or players is <code>null</code>
+     */
+    public MinecraftServer(Address address, Description description, Players players, Version version) throws IllegalArgumentException {
+        this(address, description, players, version, null);
+    }
+
+    /**
+     * @param address the resolved server address
+     * @param description the server description
+     * @param players the server players information
+     * @param version the server version information, or <code>null</code> if the server version is unknown
+     * @param favicon the server favicon as a base64 encoded png image, or <code>null</code> if the server has no favicon
+     * @throws IllegalArgumentException if address, description, or players is <code>null</code>
+     */
+    public MinecraftServer(Address address, Description description, Players players, Version version, String favicon)
+            throws IllegalArgumentException {
         if (address == null) {
             throw new IllegalArgumentException("address cannot be null");
-        }
-        if (players == null) {
-            throw new IllegalArgumentException("players cannot be null");
-        }
-        if (version == null) {
-            throw new IllegalArgumentException("version cannot be null");
         }
         if (description == null) {
             throw new IllegalArgumentException("description cannot be null");
         }
+        if (players == null) {
+            throw new IllegalArgumentException("players cannot be null");
+        }
         this.address = address;
+        this.description = description;
         this.players = players;
         this.version = version;
-        this.description = description;
         this.favicon = favicon;
     }
 
     public MinecraftServer(MinecraftServer other) {
         address = new Address(other.address);
+        description = new Description(other.description);
         players = new Players(other.players);
         version = new Version(other.version);
-        description = new Description(other.description);
         favicon = other.favicon;
     }
 
@@ -51,20 +81,6 @@ public class MinecraftServer {
     }
 
     /**
-     * @return the server players information
-     */
-    public Players getPlayers() {
-        return players;
-    }
-
-    /**
-     * @return the server version information
-     */
-    public Version getVersion() {
-        return version;
-    }
-
-    /**
      * @return the server description
      */
     public Description getDescription() {
@@ -72,16 +88,45 @@ public class MinecraftServer {
     }
 
     /**
-     * @return the server favicon as a base64 encoded png image, or null if the server has no favicon
+     * @return the server players information
+     */
+    public Players getPlayers() {
+        return players;
+    }
+
+    /**
+     * <b>Note:</b> This should only return <code>null</code> if MinecraftPinger legacy17 was used
+     * @return the server version information, or <code>null</code> if the server version is unknown
+     */
+    public Version getVersion() {
+        return version;
+    }
+
+    /**
+     * <b>Note:</b> This will only exist when using the non-legacy versions of MinecraftPinger because the favicon
+     * did not exist in legacy protocol versions.
+     * @return the server favicon as a base64 encoded png image, or <code>null</code> if the server has no favicon
      */
     public String getFavicon() {
         return favicon;
     }
 
+
+    protected String getPrintableFavicon() {
+        String favicon = getFavicon();
+        if (favicon != null) {
+            int iconDataIndex = favicon.indexOf(',');
+            if (iconDataIndex > 0) {
+                favicon = favicon.substring(0, iconDataIndex);
+            }
+        }
+        return favicon;
+    }
+
     @Override
     public String toString() {
-        return "MinecraftServer{address=" + getAddress() + ", players=" + getPlayers() + ", version=" + getVersion() + ", description=" +
-                getDescription() + ", favicon=" + getFavicon() + "}";
+        return "MinecraftServer{address: " + getAddress() + ", players: " + getPlayers() + ", version: " + getVersion() + ", description: " +
+                getDescription() + ", favicon: " + getPrintableFavicon() + "}";
     }
 
     @Override
@@ -202,12 +247,8 @@ public class MinecraftServer {
 
         /**
          * @param max the maximum amount of players
-         * @throws IllegalArgumentException if max is less than 0
          */
         public Players(int max) {
-            if (max < 0) {
-                throw new IllegalArgumentException("count cannot be less than 0");
-            }
             this.max = max;
         }
 
@@ -280,7 +321,8 @@ public class MinecraftServer {
         }
 
         /**
-         * <b>Note:</b> This may not be the real protocol number depending if a server plugin manipulated the response
+         * <b>Note:</b> This may not be the real protocol number depending if a server plugin manipulated the response.
+         * And due to a server-side bug, this will incorrectly be 127 if using MinecraftPing legacy47 for a server on version 1.7.x and above.
          * @return the protocol number of the server network interface
          */
         public int getProtocol() {
@@ -315,54 +357,56 @@ public class MinecraftServer {
     }
 
     /**
-     * A class containing the Minecraft server description with two possible formats
+     * A class containing the Minecraft server description in two formats.
+     * <ul>
+     * <li>Legacy Format: {@link #getText()}</li>
+     * <li>Component Format: {@link #asComponent()}</li>
+     * </ul>
      */
     public static class Description {
 
+        private final TextComponent component;
         private final String text;
-        private final String extra;
 
-        /**
-         * @param text the server description text which may contain formatting codes
-         * @param extra the server description in the Text Component json format
-         */
-        public Description(String text, String extra) {
-            this.text = (text != null ? text : "");
-            this.extra = extra;
+        public Description(TextComponent component) {
+            this.component = component;
+            this.text = component.toLegacyText();
+        }
+
+        public Description(String text) {
+            BaseComponent[] components = TextComponent.fromLegacyText(text);
+            this.component = (components.length > 1 ? new TextComponent(components) : (TextComponent) components[0]);
+            this.text = text;
         }
 
         public Description(Description other) {
-            text = other.text;
-            extra = other.extra;
+            this.component = other.component;
+            this.text = other.text;
         }
 
         /**
-         * This will not be null but can be empty
-         * @return the server description text which may contain formatting codes
+         * @return the server description in the legacy Minecraft text format
+         * @see <a href="http://minecraft.gamepedia.com/Formatting_codes">Formatting Codes</a>
          */
         public String getText() {
             return text;
         }
 
         /**
-         * This can be null
-         * @return the server description with extra formatting information in the Text Component json format
+         * @return the server description as a new TextComponent instance
          */
-        public String getExtra() {
-            return extra;
+        public TextComponent asComponent() {
+            return new TextComponent(component);
         }
 
         @Override
         public String toString() {
-            if (getExtra() != null) {
-                return getText() + " - " + getExtra();
-            }
             return getText();
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getText(), getExtra());
+            return getText().hashCode();
         }
 
         @Override
@@ -374,7 +418,7 @@ public class MinecraftServer {
                 return false;
             }
             Description other = (Description) obj;
-            return getText().equals(other.getText()) && Objects.equals(getExtra(), other.getExtra());
+            return getText().equals(other.getText());
         }
 
     }
