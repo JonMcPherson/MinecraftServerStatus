@@ -85,15 +85,7 @@ public class MinecraftPinger implements Pinger {
         try (Connection connection = connect()) {
             handshake(connection);
             String response = readStatus(connection);
-
-            int latency;
-            try {
-                latency = ping(connection);
-            } catch (IOException e) {
-                // Some servers may break the protocol due to nonstandard functionality.
-                // So just use the latency from connection handshake as a fallback.
-                latency = connection.getLatency();
-            }
+            int latency = ping(connection);
 
             return new PingResponse(parseResponse(response), latency);
         }
@@ -144,23 +136,33 @@ public class MinecraftPinger implements Pinger {
     }
 
     private int ping(Connection connection) throws IOException {
-        RequestPacket pingPacket = connection.createPacket();
-        pingPacket.writeVarInt(PING_PACKET_ID);
-        pingPacket.writeLong(PING_TOKEN);
+        ResponsePacket pongPacket = null;
+        try {
+            RequestPacket pingPacket = connection.createPacket();
+            pingPacket.writeVarInt(PING_PACKET_ID);
+            pingPacket.writeLong(PING_TOKEN);
 
-        long timeSent = pingPacket.send();
+            long timeSent = pingPacket.send();
 
-        ResponsePacket pongPacket = connection.readPacket();
-        int id = pongPacket.readVarInt();
-        if (id != PING_PACKET_ID) {
-            throw new IOException("Received invalid ping response packet");
+            pongPacket = connection.readPacket();
+            int id = pongPacket.readVarInt();
+            if (id != PING_PACKET_ID) {
+                throw new IOException("Received invalid ping response packet");
+            }
+            long pongToken = pongPacket.readLong();
+            if (pongToken != PING_TOKEN) {
+                throw new IOException("Received mangled ping response packet");
+            }
+
+            return (int) TimeUnit.NANOSECONDS.toMillis(pongPacket.getTimeReceived() - timeSent);
+        } catch (IOException e) {
+            if (pongPacket == null) {
+                // Some servers may break the protocol and not handle ping packets.
+                // So return the latency from connection handshake as a fallback.
+                return connection.getLatency();
+            }
+            throw e;
         }
-        long pongToken = pongPacket.readLong();
-        if (pongToken != PING_TOKEN) {
-            throw new IOException("Received mangled ping response packet");
-        }
-
-        return (int) TimeUnit.NANOSECONDS.toMillis(pongPacket.getTimeReceived() - timeSent);
     }
 
     private String readStatus(Connection connection) throws IOException {

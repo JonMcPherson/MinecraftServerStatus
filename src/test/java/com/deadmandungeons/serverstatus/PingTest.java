@@ -36,7 +36,7 @@ public class PingTest {
     private final InetServerAddress address;
     private final Pinger pinger;
 
-    public PingTest(ServerVersion version, InetServerAddress address) {
+    public PingTest(InetServerAddress address, ServerVersion version) {
         this.address = address;
         pinger = version.createPinger(address);
 
@@ -103,7 +103,7 @@ public class PingTest {
                     try {
                         InetServerAddress resolvedAddress = InetServerAddress.resolve(resolvedAddresses.get(i));
 
-                        testServers.add(new Object[]{version, resolvedAddress});
+                        testServers.add(new Object[]{resolvedAddress, version});
                         resolved++;
                     } catch (UnknownHostException e) {
                         // Ignore unknown addresses
