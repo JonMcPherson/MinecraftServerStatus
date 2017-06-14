@@ -101,8 +101,8 @@ System.out.println(serverStatus);
 Using Maven, simply add the following repository and dependency to your project POM definition:
 ```xml
 <repository>
-	<id>deadman-dungeons</id>
-	<url>http://deadmandungeons.com/artifactory/public</url>
+    <id>deadman-dungeons</id>
+    <url>http://deadmandungeons.com/artifactory/public</url>
 </repository>
 ```
 ```xml
